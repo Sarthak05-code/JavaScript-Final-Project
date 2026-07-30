@@ -1,38 +1,94 @@
 import { useEffect, useState } from "react";
 
+const BACKEND_URL = "http://localhost:5000";
+
 function App() {
   const [services, setServices] = useState([]);
   const [error, setError] = useState("");
+  const [lastChecked, setLastChecked] = useState(null);
+  const [isChecking, setIsChecking] = useState(false);
+
+  const fetchServices = async () => {
+    setIsChecking(true);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/services`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch services");
+      }
+
+      const data = await response.json();
+
+      setServices(data);
+      setError("");
+      setLastChecked(new Date());
+    } catch (error) {
+      console.error(error);
+      setError("Could not connect to backend.");
+    } finally {
+      setIsChecking(false);
+    }
+  };
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/services")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to fetch services");
-        }
+    // Initial check when the page loads.
+    fetchServices();
 
-        return response.json();
-      })
-      .then((data) => {
-        setServices(data);
-      })
-      .catch((error) => {
-        console.error(error);
-        setError("Could not connect to backend.");
-      });
+    // Automatically check every 10 seconds.
+    const intervalId = setInterval(() => {
+      fetchServices();
+    }, 10000);
+
+    // Clean up the interval when the component unmounts.
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-8">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl font-bold mb-2">Local Service Monitor</h1>
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+          <div>
+            <h1 className="text-4xl font-bold">Local Service Monitor</h1>
 
-        <p className="text-slate-400 mb-8">
-          Monitoring {services.length} service(s)
-        </p>
+            <p className="text-slate-400 mt-2">
+              Monitoring {services.length} service(s)
+            </p>
 
-        {error && <p className="text-red-400 mb-6">{error}</p>}
+            {lastChecked && (
+              <p className="text-sm text-slate-500 mt-1">
+                Last checked: {lastChecked.toLocaleTimeString()}
+              </p>
+            )}
+          </div>
 
+          <button
+            onClick={fetchServices}
+            disabled={isChecking}
+            className="px-5 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed font-medium transition"
+          >
+            {isChecking ? "Checking..." : "Check Now"}
+          </button>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-400">
+            {error}
+          </div>
+        )}
+
+        {/* Loading */}
+        {isChecking && services.length === 0 && (
+          <div className="text-center text-slate-400 py-12">
+            Checking services...
+          </div>
+        )}
+
+        {/* Service cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {services.map((service) => (
             <div
