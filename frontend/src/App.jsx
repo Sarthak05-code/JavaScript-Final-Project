@@ -1,122 +1,81 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from "react";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [services, setServices] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/services")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch services");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setServices(data);
+      })
+      .catch((error) => {
+        console.error(error);
+        setError("Could not connect to backend.");
+      });
+  }, []);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-h-screen bg-slate-950 text-white p-8">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-4xl font-bold mb-2">Local Service Monitor</h1>
 
-      <div className="ticks"></div>
+        <p className="text-slate-400 mb-8">
+          Monitoring {services.length} service(s)
+        </p>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {error && <p className="text-red-400 mb-6">{error}</p>}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {services.map((service) => (
+            <div
+              key={service.id}
+              className="bg-slate-900 border border-slate-800 rounded-xl p-5"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">{service.name}</h2>
+
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    service.status === "UP"
+                      ? "bg-green-500/10 text-green-400"
+                      : "bg-red-500/10 text-red-400"
+                  }`}
+                >
+                  {service.status}
+                </span>
+              </div>
+
+              <p className="text-sm text-slate-400 break-all">{service.url}</p>
+
+              <div className="mt-5 space-y-2 text-sm">
+                <p>
+                  Response time:{" "}
+                  <span className="text-slate-300">
+                    {service.responseTime} ms
+                  </span>
+                </p>
+
+                <p>
+                  HTTP status:{" "}
+                  <span className="text-slate-300">
+                    {service.httpStatus ?? "N/A"}
+                  </span>
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;
