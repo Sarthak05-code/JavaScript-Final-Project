@@ -11,10 +11,11 @@ async function checkService(url) {
       httpStatus: response.status,
     };
   } catch (error) {
-    const responeTime = Date.now() - startTime;
+    const responseTime = Date.now() - startTime;
+
     return {
       status: "DOWN",
-      responeTime: responeTime,
+      responseTime: responseTime,
       httpStatus: null,
     };
   }
