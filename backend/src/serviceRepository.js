@@ -2,7 +2,17 @@ const db = require("./database");
 
 async function getAllServices() {
   const [rows] = await db.query(
-    "SELECT id, name, url, created_at FROM services ORDER BY id",
+    `SELECT
+      id,
+      name,
+      url,
+      status,
+      response_time AS responseTime,
+      http_status AS httpStatus,
+      last_checked AS lastChecked,
+      created_at
+     FROM services
+     ORDER BY id`,
   );
 
   return rows;
@@ -63,10 +73,38 @@ async function getServiceStats(serviceId) {
   };
 }
 
+async function updateServiceStatus(
+  serviceId,
+  status,
+  responseTime,
+  httpStatus,
+) {
+  await db.execute(
+    `UPDATE services
+     SET status = ?,
+         response_time = ?,
+         http_status = ?,
+         last_checked = CURRENT_TIMESTAMP
+     WHERE id = ?`,
+    [status, responseTime ?? null, httpStatus ?? null, serviceId],
+  );
+}
+
+async function deleteOldServiceChecks() {
+  const [result] = await db.execute(
+    `DELETE FROM service_checks
+     WHERE checked_at < NOW() - INTERVAL 7 DAY`,
+  );
+
+  return result.affectedRows;
+}
+
 module.exports = {
   getAllServices,
   createService,
   deleteService,
   recordServiceCheck,
   getServiceStats,
+  updateServiceStatus,
+  deleteOldServiceChecks,
 };
