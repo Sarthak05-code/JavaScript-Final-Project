@@ -10,19 +10,19 @@ function App() {
   const [lastChecked, setLastChecked] = useState(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const getServices = async () => {
+    const response = await fetch(`${BACKEND_URL}/api/services`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch services. ");
+    }
+    return response.json();
+  };
 
   const fetchServices = async () => {
     setIsChecking(true);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/services`);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch services");
-      }
-
-      const data = await response.json();
-
+      const data = await getServices();
       setServices(data);
       setError("");
       setLastChecked(new Date());
@@ -35,14 +35,28 @@ function App() {
   };
 
   useEffect(() => {
-    fetchServices();
+    let canceled = false;
 
-    const intervalId = setInterval(() => {
-      fetchServices();
-    }, 10000);
+    const load = async () => {
+      try {
+        const data = await getServices();
+
+        if (!canceled) {
+          setServices(data);
+          setError("");
+          setLastChecked(new Date());
+        }
+      } catch (error) {
+        if (!canceled) {
+          console.error(error);
+          setError("Could not connect to backend");
+        }
+      }
+    };
+    load();
 
     return () => {
-      clearInterval(intervalId);
+      canceled = true;
     };
   }, []);
 
@@ -230,7 +244,9 @@ function App() {
               <button
                 onClick={() => handleDeleteService(service.id)}
                 className="mt-5 w-full rounded-lg bg-red-500/10 px-4 py-2 text-red-400 hover:bg-red-500/20 transition"
-              >Delete</button>
+              >
+                Delete
+              </button>
             </div>
           ))}
         </div>
