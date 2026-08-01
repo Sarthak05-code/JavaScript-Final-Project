@@ -37,39 +37,44 @@ async function runMonitoringCycle() {
 
     const io = getIO();
 
-    await Promise.all(
-      services.map(async (service) => {
-        const result = await checkService(service.url);
+    const checks = services.map(async (service) => {
+      const result = await checkService(service.url);
 
-        await recordServiceCheck(
-          service.id,
-          result.status,
-          result.responseTime,
-          result.httpStatus,
-        );
+      await recordServiceCheck(
+        service.id,
+        result.status,
+        result.responseTime,
+        result.httpStatus,
+      );
 
-        await updateServiceStatus(
-          service.id,
-          result.status,
-          result.responseTime,
-          result.httpStatus,
-        );
+      await updateServiceStatus(
+        service.id,
+        result.status,
+        result.responseTime,
+        result.httpStatus,
+      );
 
-        const stats = await getServiceStats(service.id);
+      const stats = await getServiceStats(service.id);
 
-        io.emit("serviceUpdated", {
-          service: {
-            id: service.id,
-            name: service.name,
-            url: service.url,
-            status: result.status,
-            responseTime: result.responseTime,
-            httpStatus: result.httpStatus,
-          },
-          stats,
-        });
-      }),
-    );
+      io.emit("serviceUpdated", {
+        service: {
+          id: service.id,
+          name: service.name,
+          url: service.url,
+          status: result.status,
+          responseTime: result.responseTime,
+          httpStatus: result.httpStatus,
+        },
+        stats,
+      });
+    });
+
+    const results = await Promise.allSettled(checks);
+    results.forEach((result) => {
+      if (result.status === "rejected") {
+        console.error("[Monitor] Service check failed : ", result.reason);
+      }
+    });
 
     console.log(
       `[Monitor] Checked ${services.length} service(s) at ${new Date().toLocaleTimeString()}`,
