@@ -1,5 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const http = require("http");
+const { Server } = require("socket.io");
+const {setIO} = require("./socket")
 
 const { startMonitoring } = require("./monitor");
 
@@ -11,11 +14,31 @@ const {
 } = require("./serviceRepository");
 
 const app = express();
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "DELETE"],
+  },
+});
+setIO(io)
 
 const PORT = 5000;
 
 app.use(cors());
 app.use(express.json());
+
+io.on("connection", (socket) => {
+  console.log(`Client connected : ${socket.id}`);
+
+  socket.emit("connected", {
+    message: "Connected to the local service monitor",
+  });
+  socket.on("disconnect", () => {
+    console.log(`Client disconnected : ${socket.id}`);
+  });
+});
 
 app.get("/", (req, res) => {
   res.send("Service Monitor Backend is running!");
@@ -46,7 +69,6 @@ app.post("/api/services", async (req, res) => {
     }
 
     try {
-      
       new URL(url);
     } catch {
       return res.status(400).json({
@@ -116,7 +138,7 @@ app.get("/api/services/:id/stats", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 
   startMonitoring();
