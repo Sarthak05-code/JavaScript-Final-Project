@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import socket from "./socket";
 
 // the default url we will use. we can probably change it
 const BACKEND_URL = "http://localhost:5000";
@@ -130,8 +131,44 @@ function App() {
 
     load();
 
+    // Adding socket here.
+    socket.on("connect", () => {
+      console.log("Connection Sucessfull");
+    });
+
+    socket.on("connected", (data) => {
+      console.log(data.message);
+    });
+    socket.on("disconnect", () => {
+      console.log("Socket disconnected");
+    });
+    socket.on("serviceUpdated", ({ service, stats }) => {
+      console.log("Live update:", service);
+      console.log("Updated stats:", stats);
+
+      setServices((previousServices) =>
+        previousServices.map((currentService) =>
+          currentService.id === service.id
+            ? {
+                ...currentService,
+                ...service,
+              }
+            : currentService,
+        ),
+      );
+
+      setServiceStats((previousStats) => ({
+        ...previousStats,
+        [service.id]: stats,
+      }));
+    });
+
     return () => {
       cancelled = true;
+      socket.off("connect");
+      socket.off("connected");
+      socket.off("disconnect");
+      socket.off("serviceUpdated");
     };
   }, []);
 

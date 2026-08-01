@@ -1,15 +1,17 @@
 const { checkService } = require("./serviceChecker");
+const { getIO } = require("./socket");
 
 const {
   getAllServices,
   recordServiceCheck,
   updateServiceStatus,
   deleteOldServiceChecks,
+  getServiceStats,
 } = require("./serviceRepository");
 
 let lastCleanup = 0;
-const CLEANUP_INTERVAL = 24 * 60 * 60 * 1000;
 
+const CLEANUP_INTERVAL = 24 * 60 * 60 * 1000;
 const CHECK_INTERVAL = 10000;
 
 async function runMonitoringCycle() {
@@ -17,10 +19,16 @@ async function runMonitoringCycle() {
 
   if (now - lastCleanup >= CLEANUP_INTERVAL) {
     const deleted = await deleteOldServiceChecks();
-    console.log(`[Monior] Deleted ${deleted} old checks records`);
+
+    console.log(`[Monitor] Deleted ${deleted} old check records`);
+
+    lastCleanup = now;
   }
+
   try {
     const services = await getAllServices();
+
+    const io = getIO();
 
     await Promise.all(
       services.map(async (service) => {
@@ -39,6 +47,20 @@ async function runMonitoringCycle() {
           result.responseTime,
           result.httpStatus,
         );
+
+        const stats = await getServiceStats(service.id);
+
+        io.emit("serviceUpdated", {
+          service: {
+            id: service.id,
+            name: service.name,
+            url: service.url,
+            status: result.status,
+            responseTime: result.responseTime,
+            httpStatus: result.httpStatus,
+          },
+          stats,
+        });
       }),
     );
 
@@ -53,9 +75,7 @@ async function runMonitoringCycle() {
 function startMonitoring() {
   runMonitoringCycle();
 
-  setInterval(() => {
-    runMonitoringCycle();
-  }, CHECK_INTERVAL);
+  setInterval(runMonitoringCycle, CHECK_INTERVAL);
 }
 
 module.exports = {
