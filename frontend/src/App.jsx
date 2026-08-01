@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-// the default url we will use.
+// the default url we will use. we can probably change it
 const BACKEND_URL = "http://localhost:5000";
 
 function App() {
