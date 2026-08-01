@@ -99,6 +99,28 @@ async function deleteOldServiceChecks() {
   return result.affectedRows;
 }
 
+async function getServiceHistory(serviceId, limit = 20) {
+  const [rows] = await db.query(
+    `Select
+    checked_at,
+    response_time,
+    status,
+    http_status
+    From service_checks
+    where service_id = ?
+    order by checked_at desc
+    limit ?
+    `,
+    [serviceId, limit],
+  );
+  return rows.reverse().map((row) => ({
+    checkedAt: row.checked_at,
+    responseTime: row.response_time,
+    httpStatus: row.http_status,
+    status: row.status,
+  }));
+}
+
 module.exports = {
   getAllServices,
   createService,
@@ -107,4 +129,5 @@ module.exports = {
   getServiceStats,
   updateServiceStatus,
   deleteOldServiceChecks,
+  getServiceHistory,
 };

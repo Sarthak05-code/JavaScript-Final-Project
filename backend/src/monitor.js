@@ -1,6 +1,8 @@
 const { checkService } = require("./serviceChecker");
 const { getIO } = require("./socket");
 
+
+
 const {
   getAllServices,
   recordServiceCheck,
@@ -92,6 +94,21 @@ function startMonitoring() {
   setInterval(runMonitoringCycle, CHECK_INTERVAL);
 }
 
+async function getHistory(req, res) {
+  try {
+    const history = await getServiceHistory(req.params.id);
+
+    res.json(history);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: "Failed to fetch service history",
+    });
+  }
+}
+
 module.exports = {
   startMonitoring,
+  getHistory,
 };

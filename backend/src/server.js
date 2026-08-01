@@ -2,7 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
-const {setIO} = require("./socket")
+const { setIO } = require("./socket")
+
+const {startMonitoring, getHistory} = require("./monitor")
 
 const { startMonitoring } = require("./monitor");
 
@@ -137,6 +139,8 @@ app.get("/api/services/:id/stats", async (req, res) => {
     });
   }
 });
+
+app.get("/api/services/:id/history" , getHistory)
 
 server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
