@@ -10,22 +10,29 @@ const {
 } = require("./serviceRepository");
 
 let lastCleanup = 0;
+let monitorRunning = false;
 
 const CLEANUP_INTERVAL = 24 * 60 * 60 * 1000;
 const CHECK_INTERVAL = 10000;
 
 async function runMonitoringCycle() {
-  const now = Date.now();
-
-  if (now - lastCleanup >= CLEANUP_INTERVAL) {
-    const deleted = await deleteOldServiceChecks();
-
-    console.log(`[Monitor] Deleted ${deleted} old check records`);
-
-    lastCleanup = now;
+  if (monitorRunning) {
+    console.log("[Monitor] Previous monitor cycle still running. Skipping...");
+    return;
   }
+  monitorRunning = true;
 
   try {
+    const now = Date.now();
+
+    if (now - lastCleanup >= CLEANUP_INTERVAL) {
+      const deleted = await deleteOldServiceChecks();
+
+      console.log(`[Monitor] Deleted ${deleted} old check records`);
+
+      lastCleanup = now;
+    }
+
     const services = await getAllServices();
 
     const io = getIO();
@@ -69,6 +76,8 @@ async function runMonitoringCycle() {
     );
   } catch (error) {
     console.error("[Monitor] Monitoring cycle failed:", error);
+  } finally {
+    monitorRunning = false;
   }
 }
 
