@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Assembly Transpiler</title>
+        <link rel="stylesheet" href="/css/output.css" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body
+        class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col"
+    >
+        <!-- Header -->
+        <header
+            class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between"
+        >
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center font-bold text-white"
+                >
+                    A
+                </div>
+                <h1 class="text-xl font-bold text-white">
+                    Assembly Transpiler
+                </h1>
+            </div>
+            <div class="flex gap-3">
+                <button
+                    id="compileBtn"
+                    class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2"
+                >
+                    <span>▶</span> Compile
+                </button>
+                <button
+                    id="saveBtn"
+                    class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                >
+                    Save
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex gap-0 overflow-hidden">
+            <!-- Source Panel -->
+            <div class="flex-1 flex flex-col border-r border-gray-700">
+                <div
+                    class="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center justify-between"
+                >
+                    <span
+                        class="text-sm font-medium text-gray-400 uppercase tracking-wider"
+                        >Source Code</span
+                    >
+                    <span class="text-xs text-gray-500">Custom Language</span>
+                </div>
+                <textarea
+                    id="sourceEditor"
+                    class="flex-1 bg-gray-900 text-gray-100 font-mono text-sm p-4 resize-none focus:outline-none"
+                    spellcheck="false"
+                    placeholder="// Write your code here...
+// Example:
+int x = 5;
+int y = 10;
+int sum = x + y;
+if (sum > 10) {
+    print(sum);
+}"
+                ></textarea>
+            </div>
+
+            <!-- Assembly Panel -->
+            <div class="flex-1 flex flex-col">
+                <div
+                    class="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center justify-between"
+                >
+                    <span
+                        class="text-sm font-medium text-gray-400 uppercase tracking-wider"
+                        >Generated Assembly</span
+                    >
+                    <span class="text-xs text-gray-500">Pseudo-Assembly</span>
+                </div>
+                <pre
+                    id="assemblyOutput"
+                    class="flex-1 bg-[#0d1117] text-green-400 font-mono text-sm p-4 overflow-auto"
+                ></pre>
+            </div>
+        </main>
+
+        <!-- Error Toast -->
+        <div
+            id="errorToast"
+            class="fixed bottom-4 right-4 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg hidden max-w-md"
+        >
+            <div class="font-semibold mb-1">Compilation Error</div>
+            <div id="errorText" class="text-sm"></div>
+        </div>
+
+        <script src="/js/api.js"></script>
+    </body>
+</html>
