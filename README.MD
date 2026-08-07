@@ -462,16 +462,6 @@ while (i < n) {
 
 ---
 
-## Screenshots
-
-_(Add screenshots of your application here)_
-
-- Main editor interface
-- Compilation with assembly output
-- Error highlighting
-- Examples modal
-
----
 
 ## Project Structure
 
