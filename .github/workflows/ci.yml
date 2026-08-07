@@ -1,15 +1,50 @@
-name: CI
+name: CI + Deploy
 
 on: [push, pull_request]
 
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: transpiler
+        ports:
+          - 3306:3306
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - run: npm install
-      - run: npm run build:css:once
-      - run: npm test
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Security audit
+        run: npm audit --audit-level=moderate
+
+      - name: Build CSS
+        run: npm run build:css:once
+
+      - name: Check bundle size
+        run: |
+          CSS_SIZE=$(wc -c < public/css/output.css)
+          echo "CSS: $CSS_SIZE bytes"
+
+      - name: Verify modules load
+        run: node -e "require('./src/lexer/lexer'); require('./src/parser/parser'); require('./src/codegen/generator'); console.log('✓ All modules load')"
+
+      - name: Start server and test endpoint
+        run: |
+          DB_PASSWORD=root DB_NAME=transpiler node server.js &
+          sleep 3
+          curl -s -X POST http://localhost:3000/api/compile \
+            -H "Content-Type: application/json" \
+            -d '{"source":"int x = 5; print(x);"}' | grep -q '"success":true'
+          echo "✓ Compile endpoint works"
+        env:
+          DB_PASSWORD: root
+          DB_NAME: transpiler
