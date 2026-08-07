@@ -3,7 +3,7 @@ class CompileError extends Error {
     super(message);
     this.line = line;
     this.column = column;
-    this.name = "CompilerError";
+    this.name = "CompileError";
   }
 }
 

@@ -4,12 +4,51 @@ const TOKEN_TYPES = {
   KEYWORD: "KEYWORD",
   IDENTIFIER: "IDENTIFIER",
   NUMBER: "NUMBER",
+  STRING: "STRING",
+  BOOLEAN: "BOOLEAN",
   OPERATOR: "OPERATOR",
   SYMBOL: "SYMBOL",
+  COMMENT: "COMMENT",
   EOF: "EOF",
 };
 
-const KEYWORDS = ["int", "if", "else", "while", "print", "return"];
+const KEYWORDS = [
+  "int",
+  "float",
+  "string",
+  "bool",
+  "void",
+  "if",
+  "else",
+  "while",
+  "for",
+  "break",
+  "continue",
+  "function",
+  "return",
+  "print",
+  "input",
+];
+
+const OPERATORS = [
+  "=",
+  "==",
+  "!=",
+  "<",
+  ">",
+  "<=",
+  ">=",
+  "+",
+  "-",
+  "*",
+  "/",
+  "%",
+  "++",
+  "--",
+  "&&",
+  "||",
+  "!",
+];
 
 class Lexer {
   constructor(source) {
@@ -20,18 +59,20 @@ class Lexer {
     this.tokens = [];
   }
 
-  peek() {
-    return this.source[this.pos] || "\0";
+  peek(offset = 0) {
+    return this.source[this.pos + offset] || "\0";
   }
 
   advance() {
-    if (this.source[this.pos] === "\n") {
+    const char = this.source[this.pos] || "\0";
+    if (char === "\n") {
       this.line++;
       this.col = 1;
     } else {
       this.col++;
     }
-    return this.source[this.pos++] || "\0";
+    this.pos++;
+    return char;
   }
 
   skipWhitespace() {
@@ -40,15 +81,72 @@ class Lexer {
     }
   }
 
+  readComment() {
+    while (this.peek() !== "\n" && this.peek() !== "\0") {
+      this.advance();
+    }
+  }
+
+  readMultiLineComment() {
+    while (
+      !(this.peek() === "*" && this.peek(1) === "/") &&
+      this.peek() !== "\0"
+    ) {
+      this.advance();
+    }
+    if (this.peek() === "*" && this.peek(1) === "/") {
+      this.advance();
+      this.advance();
+    }
+  }
+
+  readString() {
+    const quote = this.advance();
+    let str = "";
+    const startCol = this.col - 1;
+    while (this.peek() !== quote && this.peek() !== "\0") {
+      if (this.peek() === "\\") {
+        this.advance();
+        const esc = this.advance();
+        const escapes = {
+          n: "\n",
+          t: "\t",
+          r: "\r",
+          "\\": "\\",
+          '"': '"',
+          "'": "'",
+        };
+        str += escapes[esc] || esc;
+      } else {
+        str += this.advance();
+      }
+    }
+    if (this.peek() === "\0") {
+      throw new CompileError("Unterminated string", this.line, startCol);
+    }
+    this.advance();
+    return {
+      type: TOKEN_TYPES.STRING,
+      value: str,
+      line: this.line,
+      col: startCol,
+    };
+  }
+
   readNumber() {
     let num = "";
     const startCol = this.col;
-    while (/\d/.test(this.peek())) {
+    let isFloat = false;
+    while (
+      /\d/.test(this.peek()) ||
+      (this.peek() === "." && !isFloat && /\d/.test(this.peek(1)))
+    ) {
+      if (this.peek() === ".") isFloat = true;
       num += this.advance();
     }
     return {
       type: TOKEN_TYPES.NUMBER,
-      value: parseInt(num),
+      value: isFloat ? parseFloat(num) : parseInt(num),
       line: this.line,
       col: startCol,
     };
@@ -57,13 +155,41 @@ class Lexer {
   readIdentifier() {
     let id = "";
     const startCol = this.col;
-    while (/[a-zA-Z_]/.test(this.peek())) {
+    while (/[a-zA-Z0-9_]/.test(this.peek())) {
       id += this.advance();
+    }
+    if (id === "true" || id === "false") {
+      return {
+        type: TOKEN_TYPES.BOOLEAN,
+        value: id === "true",
+        line: this.line,
+        col: startCol,
+      };
     }
     const type = KEYWORDS.includes(id)
       ? TOKEN_TYPES.KEYWORD
       : TOKEN_TYPES.IDENTIFIER;
     return { type, value: id, line: this.line, col: startCol };
+  }
+
+  readOperator() {
+    const startCol = this.col;
+    let op = this.advance();
+    const twoChar = op + this.peek();
+    if (OPERATORS.includes(twoChar)) {
+      op += this.advance();
+    } else if (
+      OPERATORS.includes(op + this.peek()) &&
+      ["=", "!", "<", ">", "+", "-", "&", "|"].includes(op)
+    ) {
+      op += this.advance();
+    }
+    return {
+      type: TOKEN_TYPES.OPERATOR,
+      value: op,
+      line: this.line,
+      col: startCol,
+    };
   }
 
   tokenize() {
@@ -74,27 +200,25 @@ class Lexer {
       const char = this.peek();
       const startCol = this.col;
 
-      if (/\d/.test(char)) {
+      if (char === "/" && this.peek(1) === "/") {
+        this.readComment();
+        continue;
+      }
+      if (char === "/" && this.peek(1) === "*") {
+        this.advance();
+        this.advance();
+        this.readMultiLineComment();
+        continue;
+      }
+      if (char === '"' || char === "'") {
+        this.tokens.push(this.readString());
+      } else if (/\d/.test(char)) {
         this.tokens.push(this.readNumber());
       } else if (/[a-zA-Z_]/.test(char)) {
         this.tokens.push(this.readIdentifier());
-      } else if (char === "=" || char === "!" || char === "<" || char === ">") {
-        let op = this.advance();
-        if (this.peek() === "=") op += this.advance();
-        this.tokens.push({
-          type: TOKEN_TYPES.OPERATOR,
-          value: op,
-          line: this.line,
-          col: startCol,
-        });
-      } else if ("+-*/".includes(char)) {
-        this.tokens.push({
-          type: TOKEN_TYPES.OPERATOR,
-          value: this.advance(),
-          line: this.line,
-          col: startCol,
-        });
-      } else if ("{}();".includes(char)) {
+      } else if (OPERATORS.some((op) => op.startsWith(char))) {
+        this.tokens.push(this.readOperator());
+      } else if ("{}();,[]".includes(char)) {
         this.tokens.push({
           type: TOKEN_TYPES.SYMBOL,
           value: this.advance(),
@@ -103,7 +227,7 @@ class Lexer {
         });
       } else {
         throw new CompileError(
-          `Unexpected character: ${char}`,
+          `Unexpected character: '${char}'`,
           this.line,
           startCol,
         );

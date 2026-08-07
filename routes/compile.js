@@ -8,6 +8,8 @@ router.post("/", (req, res) => {
   try {
     const { source } = req.body;
 
+    const startTime = Date.now();
+
     // Step 1: Lex
     const lexer = new Lexer(source);
     const tokens = lexer.tokenize();
@@ -21,7 +23,19 @@ router.post("/", (req, res) => {
     gen.generate(ast);
     const assembly = gen.getOutput();
 
-    res.json({ success: true, assembly, tokens, ast });
+    const compileTime = Date.now() - startTime;
+
+    res.json({
+      success: true,
+      assembly,
+      tokens,
+      ast,
+      stats: {
+        tokens: tokens.length,
+        lines: source.split("\n").length,
+        compileTimeMs: compileTime,
+      },
+    });
   } catch (err) {
     res.status(400).json({
       success: false,
