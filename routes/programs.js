@@ -11,6 +11,7 @@ router.post("/", async (req, res) => {
     );
     res.json({ success: true, id: result.insertId });
   } catch (err) {
+    console.error("Save error:", err.message); // ← Add this for debugging
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -22,6 +23,7 @@ router.get("/", async (req, res) => {
     );
     res.json({ success: true, programs: rows });
   } catch (err) {
+    console.error("List error:", err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
