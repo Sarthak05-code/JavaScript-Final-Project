@@ -1,3 +1,5 @@
+-- Made with consideration of Mysql, don't know if this code will run with postgres
+
 CREATE DATABASE IF NOT EXISTS transpiler;
 USE transpiler;
 
