@@ -18,25 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Full integration smoke test with real MySQL service
   - Bundle size monitoring
   - 8 automated API endpoint tests
-- **Environment Configuration** — `process.env` support via `.env` file
-  - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `PORT` variables
-  - `.env.example` template for new developers
 - **Docker Support** — Containerization files added
   - `Dockerfile` for Node.js app image
-  - `docker-compose.yml` for orchestrating app + MySQL
   - `.dockerignore` for optimized builds
 - **Helper Scripts**
   - `start.bat` / `start.sh` — One-click application startup
   - `setup.bat` / `setup.sh` — First-time environment setup
-  - `scripts/seed.js` — Database seeding with 12 example programs
-  - `scripts/test.js` — Automated compiler test suite (22 tests)
 - **Documentation**
   - `API.md` — Full API endpoint documentation with cURL examples
   - `README.md` — Comprehensive project documentation
   - `CHANGELOG.md` — This file
-- **VS Code Configuration** — `.vscode/settings.json` and `.vscode/extensions.json`
-- **Makefile** — Cross-platform command shortcuts (`make build`, `make test`, etc.)
-- **GitHub Issue Templates** — Bug report and feature request templates
 
 ### Changed
 
