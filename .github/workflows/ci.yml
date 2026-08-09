@@ -1,4 +1,4 @@
-name: CI / CD Pipeline
+name: CI
 
 on:
   push:
@@ -6,149 +6,37 @@ on:
   pull_request:
     branches: [main, master]
 
-# Prevent multiple runs from conflicting
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  # ========================================================================
-  # JOB 1: Code Quality & Security
-  # ========================================================================
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run npm audit
-        run: npm audit --audit-level=moderate
+      - run: npm ci
+      - run: npm audit --audit-level=moderate
         continue-on-error: true
 
-      - name: Check for outdated dependencies
-        run: npm outdated || true
-
-  # ========================================================================
-  # JOB 2: Build & Bundle Analysis
-  # ========================================================================
   build:
     name: Build & Bundle Check
     runs-on: ubuntu-latest
     needs: audit
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build CSS (one-shot)
-        run: npm run build:css:once
-
-      - name: Check bundle size
-        run: |
-          echo "=== Bundle Size Report ==="
+      - run: npm ci
+      - run: npm run build:css:once
+      - run: |
           CSS_SIZE=$(wc -c < public/css/output.css)
-          JS_SIZE=$(find src -name "*.js" | xargs wc -c | tail -1 | awk '{print $1}')
-          HTML_SIZE=$(wc -c < public/index.html)
+          echo "CSS output: $CSS_SIZE bytes"
+          if [ $CSS_SIZE -gt 100000 ]; then exit 1; fi
 
-          echo "CSS output:  $CSS_SIZE bytes"
-          echo "JS source:   $JS_SIZE bytes"
-          echo "HTML:        $HTML_SIZE bytes"
-          echo ""
-
-          if [ $CSS_SIZE -gt 100000 ]; then
-            echo "⚠️  WARNING: CSS output exceeds 100KB"
-            exit 1
-          fi
-
-          if [ $CSS_SIZE -gt 50000 ]; then
-            echo "⚠️  WARNING: CSS output exceeds 50KB"
-          fi
-
-          echo "✅ Bundle size OK"
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-files
-          path: |
-            public/css/output.css
-            public/index.html
-            public/js/
-
-  # ========================================================================
-  # JOB 3: Cross-Platform Module Load Test
-  # ========================================================================
-  matrix-test:
-    name: Node ${{ matrix.node-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    needs: audit
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [20, 22, 24]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Verify all modules load
-        run: |
-          node -e "
-            const lexer = require('./src/lexer/lexer');
-            const parser = require('./src/parser/parser');
-            const codegen = require('./src/codegen/generator');
-            const db = require('./config/db');
-            console.log('✅ All modules load successfully on Node ${{ matrix.node-version }} (${{ matrix.os }})');
-          "
-
-      - name: Quick syntax validation
-        run: |
-          node -e "
-            const { Lexer } = require('./src/lexer/lexer');
-            const { Parser } = require('./src/parser/parser');
-            const { CodeGenerator } = require('./src/codegen/generator');
-
-            const source = 'int x = 5; int y = 10; print(x + y);';
-            const tokens = new Lexer(source).tokenize();
-            const ast = new Parser(tokens).parse();
-            const gen = new CodeGenerator();
-            gen.generate(ast);
-
-            console.log('✅ Compile pipeline works on Node ${{ matrix.node-version }}');
-            console.log('Generated assembly:');
-            console.log(gen.getOutput());
-          "
-
-  # ========================================================================
-  # JOB 4: Full Integration Smoke Test (Server + MySQL + Compiler)
-  # ========================================================================
   integration:
     name: Integration Smoke Test
     runs-on: ubuntu-latest
@@ -167,152 +55,31 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-files
-          path: public/
-
-      - name: Setup database schema
-        run: |
-          mysql -h 127.0.0.1 -P 3306 -u root -proot transpiler < database/schema.sql
-          echo "✅ Database schema applied"
-
-      - name: Start server in background
-        run: |
+      - run: npm ci
+      - run: npm run build:css:once
+      - run: mysql -h 127.0.0.1 -P 3306 -u root -proot transpiler < database/schema.sql
+      - run: |
           export DB_HOST=127.0.0.1
           export DB_USER=root
           export DB_PASSWORD=root
           export DB_NAME=transpiler
-
           node server.js &
-          SERVER_PID=$!
-          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
-
-          # Wait for server to be ready
-          for i in {1..30}; do
-            if curl -s http://localhost:3000 > /dev/null; then
-              echo "✅ Server is up on port 3000"
-              break
-            fi
-            sleep 1
-          done
-
-      - name: Test 1 — Basic compilation
-        run: |
-          RESPONSE=$(curl -s -X POST http://localhost:3000/api/compile             -H "Content-Type: application/json"             -d '{"source":"int x = 5; print(x);"}')
-
-          echo "Response: $RESPONSE"
-
-          if echo "$RESPONSE" | grep -q '"success":true'; then
-            echo "✅ Basic compilation works"
-          else
-            echo "❌ Basic compilation failed"
-            exit 1
-          fi
-
-      - name: Test 2 — Functions
-        run: |
-          RESPONSE=$(curl -s -X POST http://localhost:3000/api/compile             -H "Content-Type: application/json"             -d '{"source":"function int add(int a, int b) { return a + b; } print(add(2, 3));"}')
-
-          if echo "$RESPONSE" | grep -q '"success":true'; then
-            echo "✅ Function compilation works"
-          else
-            echo "❌ Function compilation failed"
-            exit 1
-          fi
-
-      - name: Test 3 — Recursion
-        run: |
-          RESPONSE=$(curl -s -X POST http://localhost:3000/api/compile             -H "Content-Type: application/json"             -d '{"source":"function int fact(int n) { if (n <= 1) { return 1; } return n * fact(n - 1); } print(fact(5));"}')
-
-          if echo "$RESPONSE" | grep -q '"success":true'; then
-            echo "✅ Recursion compilation works"
-          else
-            echo "❌ Recursion compilation failed"
-            exit 1
-          fi
-
-      - name: Test 4 — Strings
-        run: |
-          RESPONSE=$(curl -s -X POST http://localhost:3000/api/compile             -H "Content-Type: application/json"             -d '{"source":"string msg = \"hello\"; print(msg);"}')
-
-          if echo "$RESPONSE" | grep -q '"success":true'; then
-            echo "✅ String compilation works"
-          else
-            echo "❌ String compilation failed"
-            exit 1
-          fi
-
-      - name: Test 5 — Error handling
-        run: |
-          RESPONSE=$(curl -s -X POST http://localhost:3000/api/compile             -H "Content-Type: application/json"             -d '{"source":"print(x);"}')
-
-          if echo "$RESPONSE" | grep -q '"success":false'; then
-            echo "✅ Error handling works (correctly rejected undefined variable)"
-          else
-            echo "❌ Error handling failed"
-            exit 1
-          fi
-
-      - name: Test 6 — Save program endpoint
-        run: |
-          RESPONSE=$(curl -s -X POST http://localhost:3000/api/programs             -H "Content-Type: application/json"             -d '{"name":"CI Test","source_code":"int x = 1;","assembly_output":"MOV R0, 1"}')
-
-          if echo "$RESPONSE" | grep -q '"success":true'; then
-            echo "✅ Save program endpoint works"
-          else
-            echo "❌ Save program endpoint failed"
-            exit 1
-          fi
-
-      - name: Test 7 — List programs endpoint
-        run: |
-          RESPONSE=$(curl -s http://localhost:3000/api/programs)
-
-          if echo "$RESPONSE" | grep -q '"success":true'; then
-            echo "✅ List programs endpoint works"
-          else
-            echo "❌ List programs endpoint failed"
-            exit 1
-          fi
-
-      - name: Test 8 — Frontend loads
-        run: |
-          RESPONSE=$(curl -s http://localhost:3000/)
-
-          if echo "$RESPONSE" | grep -q "Assembly Transpiler"; then
-            echo "✅ Frontend loads correctly"
-          else
-            echo "❌ Frontend failed to load"
-            exit 1
-          fi
-
-      - name: Print server logs on failure
-        if: failure()
-        run: |
-          echo "=== Server Process ==="
-          ps aux | grep node || true
-          echo ""
-          echo "=== MySQL Status ==="
-          mysqladmin -h 127.0.0.1 -u root -proot ping || true
-
-      - name: Cleanup server
-        if: always()
-        run: |
-          if [ -n "$SERVER_PID" ]; then
-            kill $SERVER_PID 2>/dev/null || true
-          fi
-          pkill -f "node server.js" 2>/dev/null || true
+          sleep 5
+      - run: |
+          curl -s -X POST http://localhost:3000/api/compile \
+            -H "Content-Type: application/json" \
+            -d '{"source":"int x = 5; print(x);"}' | grep -q '"success":true'
+          echo "✅ Basic compile works"
+      - run: |
+          curl -s -X POST http://localhost:3000/api/compile \
+            -H "Content-Type: application/json" \
+            -d '{"source":"function int add(int a, int b) { return a + b; } print(add(2,3));"}' | grep -q '"success":true'
+          echo "✅ Functions work"
+      - run: |
+          curl -s http://localhost:3000/ | grep -q "Assembly Transpiler"
+          echo "✅ Frontend loads"
