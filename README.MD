@@ -51,7 +51,7 @@ The system is built as a **CRUD-focused web application** using vanilla JavaScri
 | Layer               | Technology                | Purpose                            |
 | ------------------- | ------------------------- | ---------------------------------- |
 | **Frontend**        | HTML5                     | Page structure                     |
-| **Styling**         | Tailwind CSS v3           | Utility-first responsive styling   |
+| **Styling**         | Tailwind CSS v4           | Utility-first responsive styling   |
 | **Interactivity**   | Vanilla JavaScript (ES6+) | DOM manipulation, AJAX, validation |
 | **Backend**         | PHP 8.x                   | Server-side logic, API endpoints   |
 | **Database**        | MySQL / MariaDB           | Data persistence                   |
@@ -497,9 +497,9 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📞 Contact
 
-Your Name — [your-email@example.com](mailto:your-email@example.com)
+Sarthak Thapa —
 
-Project Link: [https://github.com/yourusername/streamshare](https://github.com/yourusername/streamshare)
+Project Link: [https://github.com/Sarthak05-code/Javascript-Final-Project](https://github.com/Sarthak05-code/JavaScript-Final-Project)
 
 ---
 
