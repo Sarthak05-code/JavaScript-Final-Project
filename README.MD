@@ -495,12 +495,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
-## 📞 Contact
-
-Sarthak Thapa —
-
-Project Link: [https://github.com/Sarthak05-code/Javascript-Final-Project](https://github.com/Sarthak05-code/JavaScript-Final-Project)
-
----
-
 <p align="center">Built with intention for learning full-stack web development</p>
