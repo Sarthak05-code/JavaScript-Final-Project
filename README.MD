@@ -116,19 +116,58 @@ Relationships: one seller → many subscriptions, one buyer → many purchases, 
 
 ## Project Structure
 
-```
+Current project structure:
+
+```text
 subshare/
-├── index.php            # Public marketplace
-├── login.php / register.php / logout.php
-├── actions/             # Form handlers (auth, listing CRUD)
-├── includes/            # db.php, auth.php, header, footer
-├── buyer/               # Buyer dashboard, listing view, purchases
-├── seller/              # Seller dashboard, create/edit/my listings
-├── admin/               # Admin dashboard, users, subscriptions, purchases
-├── ajax/                # purchase.php (JSON endpoint)
-├── css/  js/            # Custom styles and scripts
-├── database/            # subshare.sql
-└── docs/                # Detailed documentation
+│
+├── index.php
+├── login.php
+├── register.php
+├── logout.php
+├── README.md
+│
+├── actions/
+│   ├── register_action.php
+│   ├── login_action.php
+│   ├── create_listing_action.php
+│   ├── edit_listing_action.php
+│   └── delete_listing_action.php
+│
+├── includes/
+│   ├── db.php
+│   ├── header.php
+│   ├── footer.php
+│   └── auth.php
+│
+├── buyer/
+│   ├── dashboard.php
+│   ├── view_listing.php
+│   └── purchases.php
+│
+├── seller/
+│   ├── dashboard.php
+│   ├── create_listing.php
+│   ├── my_listings.php
+│   └── edit_listing.php
+│
+├── admin/
+│   ├── dashboard.php
+│   ├── users.php
+│   ├── subscriptions.php
+│   └── purchases.php
+│
+├── ajax/
+│   └── purchase.php
+│
+├── css/
+│   └── style.css
+│
+├── js/
+│   └── script.js
+│
+└── database/
+    └── subshare.sql
 ```
 
 ---
