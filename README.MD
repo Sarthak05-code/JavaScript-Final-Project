@@ -67,53 +67,6 @@ Admin registration is disabled on the public form — change these credentials b
 
 ---
 
-## Main URLs
-
-| Page             | URL                                              |
-| ---------------- | ------------------------------------------------ |
-| Home             | `http://localhost/subshare/`                     |
-| Login            | `http://localhost/subshare/login.php`            |
-| Register         | `http://localhost/subshare/register.php`         |
-| Buyer Dashboard  | `http://localhost/subshare/buyer/dashboard.php`  |
-| Seller Dashboard | `http://localhost/subshare/seller/dashboard.php` |
-| Admin Dashboard  | `http://localhost/subshare/admin/dashboard.php`  |
-
----
-
-## How It Works
-
-```
-Seller creates listing → Listing appears on Marketplace
-        ↓
-Buyer views subscription → Purchases slot
-        ↓
-Transaction: purchase recorded + available slots decrease
-        ↓
-Buyer tracks purchase in My Purchases (Active → Expired)
-        ↓
-Admin monitors everything from the Admin Dashboard
-```
-
-- The marketplace is **public**; purchasing requires a **buyer** account.
-- Roles are enforced server-side via `require_role()` in `includes/auth.php`.
-- A seller cannot purchase slots; only buyers can.
-
----
-
-## Database
-
-Three tables in the `subshare` database:
-
-| Table           | Purpose                                                     |
-| --------------- | ----------------------------------------------------------- |
-| `users`         | Accounts with `buyer`, `seller`, or `admin` roles           |
-| `subscriptions` | Seller listings (service, plan, price, slots, duration)     |
-| `purchases`     | Buyer purchases with purchase date, expiry date, and status |
-
-Relationships: one seller → many subscriptions, one buyer → many purchases, one subscription → many purchases. Full schema is in `docs/DOCUMENTATION.md`.
-
----
-
 ## Project Structure
 
 Current project structure:
@@ -169,6 +122,53 @@ subshare/
 └── database/
     └── subshare.sql
 ```
+
+---
+
+## Main URLs
+
+| Page             | URL                                              |
+| ---------------- | ------------------------------------------------ |
+| Home             | `http://localhost/subshare/`                     |
+| Login            | `http://localhost/subshare/login.php`            |
+| Register         | `http://localhost/subshare/register.php`         |
+| Buyer Dashboard  | `http://localhost/subshare/buyer/dashboard.php`  |
+| Seller Dashboard | `http://localhost/subshare/seller/dashboard.php` |
+| Admin Dashboard  | `http://localhost/subshare/admin/dashboard.php`  |
+
+---
+
+## How It Works
+
+```
+Seller creates listing → Listing appears on Marketplace
+        ↓
+Buyer views subscription → Purchases slot
+        ↓
+Transaction: purchase recorded + available slots decrease
+        ↓
+Buyer tracks purchase in My Purchases (Active → Expired)
+        ↓
+Admin monitors everything from the Admin Dashboard
+```
+
+- The marketplace is **public**; purchasing requires a **buyer** account.
+- Roles are enforced server-side via `require_role()` in `includes/auth.php`.
+- A seller cannot purchase slots; only buyers can.
+
+---
+
+## Database
+
+Three tables in the `subshare` database:
+
+| Table           | Purpose                                                     |
+| --------------- | ----------------------------------------------------------- |
+| `users`         | Accounts with `buyer`, `seller`, or `admin` roles           |
+| `subscriptions` | Seller listings (service, plan, price, slots, duration)     |
+| `purchases`     | Buyer purchases with purchase date, expiry date, and status |
+
+Relationships: one seller → many subscriptions, one buyer → many purchases, one subscription → many purchases. Full schema is in `docs/DOCUMENTATION.md`.
 
 ---
 
