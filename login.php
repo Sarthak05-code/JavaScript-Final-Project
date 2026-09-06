@@ -49,7 +49,7 @@ require_once "includes/header.php";
                     name="email"
                     id="email"
                     required
-                    maxlength="100""
+                    maxlength="100"
                     class="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900"
                     placeholder="Enter your email"
                 >
@@ -112,12 +112,12 @@ const passwordInput = document.getElementById("password");
 emailInput.addEventListener("input", function () {
     const email = this.value.trim();
 
+    this.setCustomValidity("");
+
     if (email === "") {
         this.setCustomValidity("Email cannot be empty");
-    } else if (!this.validity.valid) {
+    } else if (!emailInput.checkValidity()) {
         this.setCustomValidity("Please enter a valid email address");
-    } else {
-        this.setCustomValidity("");
     }
 });
 
