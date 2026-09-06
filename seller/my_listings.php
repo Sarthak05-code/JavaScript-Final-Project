@@ -173,7 +173,8 @@ $result = $stmt->get_result();
 
                             <button
                                 type="submit"
-                                class="w-full border border-red-200 text-red-600 py-2 rounded-lg hover:bg-red-50 text-sm"
+                                onclick="return confirm('Are you sure you want to delete this subscription listing?');"
+                                class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
                             >
                                 Delete
                             </button>

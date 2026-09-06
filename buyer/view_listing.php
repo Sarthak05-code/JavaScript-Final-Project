@@ -149,7 +149,7 @@ if (!$listing) {
                         Available Slots
                     </p>
 
-                    <p class="font-semibold text-gray-900 mt-1">
+                    <p id="availableSlots" class="font-semibold text-gray-900 mt-1">
                         <?= $listing["available_slots"] ?>
                     </p>
 
@@ -188,22 +188,29 @@ if (!$listing) {
                         isset($_SESSION["user_id"]) &&
                         $_SESSION["role"] === "buyer"
                     ): ?>
+                    <button
+                        type="button"
+                        id="purchaseButton"
+                        data-subscription-id="<?= $listing[
+                            "subscription_id"
+                        ] ?>"
+                        class="w-full bg-gray-900 text-white px-5 py-3 rounded-lg hover:bg-gray-800"
+                    >
+                        Purchase Slot
+                    </button>
 
-                        <button
-                            type="button"
-                            id="purchaseButton"
-                            data-subscription-id="<?= $listing[
-                                "subscription_id"
-                            ] ?>"
-                            class="w-full bg-gray-900 text-white px-5 py-3 rounded-lg hover:bg-gray-800"
-                        >
-                            Purchase Slot
-                        </button>
+                    <p
+                        id="purchaseMessage"
+                        class="text-sm text-center mt-3 hidden"
+                    ></p>
 
-                        <p
-                            id="purchaseMessage"
-                            class="text-sm text-center mt-3 hidden"
-                        ></p>
+                    <a
+                        id="viewPurchasesLink"
+                        href="purchases.php"
+                        class="hidden block w-full text-center bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 mt-3"
+                    >
+                        View My Purchases
+                    </a>
 
 
                     <!-- Guest -->
@@ -268,38 +275,38 @@ if (!$listing) {
 
 const purchaseButton = document.getElementById("purchaseButton");
 const purchaseMessage = document.getElementById("purchaseMessage");
-
+const availableSlots = document.getElementById("availableSlots");
+const viewPurchasesLink = document.getElementById("viewPurchasesLink");
 
 if (purchaseButton) {
 
     purchaseButton.addEventListener("click", function () {
 
-        const subscriptionId =
-            this.dataset.subscriptionId;
-
+        const subscriptionId = this.dataset.subscriptionId;
 
         const confirmed = confirm(
             "Are you sure you want to purchase this subscription slot?"
         );
 
-
         if (!confirmed) {
             return;
         }
 
-
+        // Disable button while request is processing
         purchaseButton.disabled = true;
-
         purchaseButton.textContent = "Processing...";
+        purchaseButton.classList.add("opacity-70", "cursor-not-allowed");
 
+        // Hide previous messages
+        purchaseMessage.classList.add("hidden");
+        viewPurchasesLink.classList.add("hidden");
 
         fetch("../ajax/purchase.php", {
 
             method: "POST",
 
             headers: {
-                "Content-Type":
-                    "application/x-www-form-urlencoded"
+                "Content-Type": "application/x-www-form-urlencoded"
             },
 
             body:
@@ -308,47 +315,60 @@ if (purchaseButton) {
 
         })
 
-
         .then(response => response.json())
-
 
         .then(data => {
 
+            purchaseMessage.classList.remove("hidden");
+
             if (data.success) {
 
-                purchaseMessage.textContent =
-                    data.message;
-
+                // Success message
+                purchaseMessage.textContent = data.message;
                 purchaseMessage.className =
                     "text-sm text-center mt-3 text-green-600";
 
-                purchaseMessage.classList.remove("hidden");
+                // Update available slots instantly
+                if (availableSlots) {
 
-                purchaseButton.textContent =
-                    "Purchase Successful";
+                    const currentSlots = parseInt(
+                        availableSlots.textContent,
+                        10
+                    );
 
+                    if (!isNaN(currentSlots) && currentSlots > 0) {
+                        availableSlots.textContent = currentSlots - 1;
+                    }
+
+                }
+
+                // Change button appearance permanently
+                purchaseButton.textContent = "✓ Purchase Successful";
+                purchaseButton.classList.remove("bg-gray-900", "hover:bg-gray-800");
+                purchaseButton.classList.add("bg-green-600");
+
+                // Show "View My Purchases"
+                viewPurchasesLink.classList.remove("hidden");
 
             } else {
 
-                purchaseMessage.textContent =
-                    data.message;
-
+                // Error message
+                purchaseMessage.textContent = data.message;
                 purchaseMessage.className =
                     "text-sm text-center mt-3 text-red-600";
 
-                purchaseMessage.classList.remove("hidden");
-
+                // Restore button
                 purchaseButton.disabled = false;
-
-                purchaseButton.textContent =
-                    "Purchase Slot";
+                purchaseButton.textContent = "Purchase Slot";
+                purchaseButton.classList.remove("opacity-70", "cursor-not-allowed");
 
             }
 
         })
 
-
         .catch(() => {
+
+            purchaseMessage.classList.remove("hidden");
 
             purchaseMessage.textContent =
                 "Something went wrong. Please try again.";
@@ -356,12 +376,10 @@ if (purchaseButton) {
             purchaseMessage.className =
                 "text-sm text-center mt-3 text-red-600";
 
-            purchaseMessage.classList.remove("hidden");
-
+            // Restore button
             purchaseButton.disabled = false;
-
-            purchaseButton.textContent =
-                "Purchase Slot";
+            purchaseButton.textContent = "Purchase Slot";
+            purchaseButton.classList.remove("opacity-70", "cursor-not-allowed");
 
         });
 

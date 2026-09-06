@@ -17,6 +17,11 @@ if ($email === "" || $password === "") {
     exit();
 }
 
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    header("Location : ../login.php?error=1");
+    exit();
+}
+
 $sql = "SELECT user_id, name, email, password, role
         FROM users
         WHERE email = ?";

@@ -28,7 +28,9 @@ require_once "includes/header.php";
                 <input
                     type="text"
                     name="name"
+                    id="name"
                     required
+                    maxlength="100"
                     class="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900"
                     placeholder="Enter your name"
                 >
@@ -45,7 +47,9 @@ require_once "includes/header.php";
                 <input
                     type="email"
                     name="email"
+                    id="email"
                     required
+                    maxlength="100"
                     class="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900"
                     placeholder="Enter your email"
                 >
@@ -62,8 +66,10 @@ require_once "includes/header.php";
                 <input
                     type="password"
                     name="password"
+                    id="password"
                     required
                     minlength="6"
+                    maxlength="255"
                     class="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-gray-900"
                     placeholder="Enter your password"
                 >
@@ -122,6 +128,43 @@ require_once "includes/header.php";
     </div>
 
 </section>
+<script>
+const nameInput = document.getElementById("name");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+
+nameInput.addEventListener("input", function () {
+    if (this.value.trim() === "") {
+        this.setCustomValidity("Name can't be empty");
+    } else {
+        this.setCustomValidity("");
+    }
+});
+
+emailInput.addEventListener("input", function () {
+    const email = this.value.trim();
+
+    if (email === "") {
+        this.setCustomValidity("Email cannot be empty");
+    } else if (!this.validity.valid) {
+        this.setCustomValidity("Please enter a valid email address");
+    } else {
+        this.setCustomValidity("");
+    }
+});
+
+passwordInput.addEventListener("input", function () {
+    const password = this.value;
+
+    if (password.trim() === "") {
+        this.setCustomValidity("Password cannot be empty");
+    } else if (password.length < 6) {
+        this.setCustomValidity("Password cannot be below six characters");
+    } else {
+        this.setCustomValidity("");
+    }
+});
+</script>
 
 <?php require_once "includes/footer.php";
 

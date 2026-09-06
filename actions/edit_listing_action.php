@@ -43,6 +43,15 @@ if (
     exit();
 }
 
+if (strlen($service_name) > 100 || strlen($plan_name) > 100) {
+    header(
+        "Location: ../seller/edit_listing.php?id=" .
+            $subscription_id .
+            "&error=fields",
+    );
+
+    exit();
+}
 /*
 |--------------------------------------------------------------------------
 | Validate Price

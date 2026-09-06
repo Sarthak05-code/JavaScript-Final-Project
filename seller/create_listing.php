@@ -201,6 +201,54 @@ require_once "../includes/header.php";
 
 </section>
 
+<script>
+  const priceInput = document.getElementById("price")
+  const slotsInput = document.getElementById("total_slots")
+  const durationInput = document.getElementById("duration_days")
+  const serviceInput = document.getElementById("service_name")
+  const planInput = document.getElementById("plan_name")
+
+
+  priceInput.addEventListener("keydown" , function (event) {
+    if (event.key === "-" || event.key === "e") {
+      event.preventDefault();
+    }
+  })
+
+  slotsInput.addEventListener("keydown" , function(event) {
+    if (event.key === "-" || event.key === "e" || event.key === ".") {
+      event.preventDefault();
+    }
+  })
+
+  durationInput.addEventListener("change" , function() {
+    const validDurations = ["7" , "30" , "90"];
+
+    if (!validDurations.includes(this.value)) {
+      this.setCustomValidity("Please select a valid duration")
+    } else {
+      this.setCustomValidity("");
+    }
+  })
+
+  function validateTextInput (input , fieldName) {
+    if (input.value.trim() === "") {
+        input.setCustomValidity(fieldName + " cannot be empty")
+    } else {
+      input.setCustomValidity("");
+    }
+  }
+
+  serviceInput.addEventListener("input" , function() {
+    validateTextInput(this , "Service name")
+  })
+
+  planInput.addEventListener("input" , function() {
+    validateTextInput(this , "Plan name")
+  })
+
+
+</script>
 
 <?php require_once "../includes/footer.php";
 

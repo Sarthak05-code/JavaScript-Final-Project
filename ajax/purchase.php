@@ -116,6 +116,30 @@ try {
 
     /*
     |--------------------------------------------------------------------------
+    | Check Duplicate Purchase
+    |--------------------------------------------------------------------------
+    */
+
+    $sql = "SELECT purchase_id
+            FROM purchases
+            WHERE buyer_id = ?
+            AND subscription_id = ?
+            AND status = 'active'";
+
+    $stmt = $conn->prepare($sql);
+
+    $stmt->bind_param("ii", $buyer_id, $subscription_id);
+
+    $stmt->execute();
+
+    $existing_purchase = $stmt->get_result();
+
+    if ($existing_purchase->num_rows > 0) {
+        throw new Exception("You have already purchased this subscription.");
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Calculate Expiry Date
     |--------------------------------------------------------------------------
     */

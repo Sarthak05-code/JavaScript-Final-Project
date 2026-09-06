@@ -16,6 +16,14 @@ if ($name === "" || $email === "" || $password === "") {
     die("Please fill in all fields.");
 }
 
+if (strlen($name) > 100) {
+    die("Name must be 100 character or less.");
+}
+
+if (strlen($email) > 100) {
+    die("Email must be 100 character or less. ");
+}
+
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     die("Invalid email address.");
 }

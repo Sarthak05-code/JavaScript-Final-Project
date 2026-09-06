@@ -33,6 +33,10 @@ if (
     exit();
 }
 
+if (strlen($service_name) > 100 || strlen($plan_name) > 100) {
+    header("Location: ../seller/create_listing.php?error=fields");
+    exit();
+}
 /*
 |--------------------------------------------------------------------------
 | Validate Price
