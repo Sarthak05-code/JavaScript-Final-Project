@@ -311,7 +311,9 @@ if (purchaseButton) {
 
             body:
                 "subscription_id=" +
-                encodeURIComponent(subscriptionId)
+                encodeURIComponent(subscriptionId) +
+                "&csrf_token=" +
+                encodeURIComponent("<?= csrf_token() ?>")
 
         })
 

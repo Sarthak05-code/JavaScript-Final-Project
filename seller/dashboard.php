@@ -310,7 +310,7 @@ require_once "../includes/header.php";
                             <!-- Price -->
 
                             <td class="py-4 pr-4">
-                                $<?= number_format(
+                                Rs. <?= number_format(
                                     (float) $listing["price"],
                                     2,
                                 ) ?>

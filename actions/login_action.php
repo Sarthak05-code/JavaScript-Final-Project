@@ -1,11 +1,15 @@
 <?php
 
-session_start();
-
+require_once "../includes/auth.php";
 require_once "../includes/db.php";
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: ../login.php");
+    exit();
+}
+
+if (!csrf_is_valid($_POST["csrf_token"] ?? null)) {
+    header("Location: ../login.php?error=1");
     exit();
 }
 
@@ -18,7 +22,7 @@ if ($email === "" || $password === "") {
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    header("Location : ../login.php?error=1");
+    header("Location: ../login.php?error=1");
     exit();
 }
 

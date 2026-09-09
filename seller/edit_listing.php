@@ -53,6 +53,8 @@ require_once "../includes/header.php";
             class="mt-8"
         >
 
+            <?= csrf_field() ?>
+
             <input
                 type="hidden"
                 name="subscription_id"
@@ -97,7 +99,7 @@ require_once "../includes/header.php";
             <div class="mb-5">
 
                 <label class="block text-sm font-medium mb-2">
-                    Price
+                    Price (Rs.)
                 </label>
 
                 <input

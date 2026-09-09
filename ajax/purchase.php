@@ -26,6 +26,15 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit();
 }
 
+if (!csrf_is_valid($_POST["csrf_token"] ?? null)) {
+    http_response_code(403);
+    echo json_encode([
+        "success" => false,
+        "message" => "Your session has expired. Please refresh the page.",
+    ]);
+    exit();
+}
+
 /*
 |--------------------------------------------------------------------------
 | Check Buyer Login
@@ -103,6 +112,71 @@ try {
     if (!$subscription) {
         throw new Exception("Subscription not found.");
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Expire Old Purchases And Restore Slots
+    |--------------------------------------------------------------------------
+    */
+
+    $sql = "SELECT purchase_id
+            FROM purchases
+            WHERE subscription_id = ?
+            AND status = 'active'
+            AND expiry_date < CURDATE()
+            FOR UPDATE";
+
+    $stmt = $conn->prepare($sql);
+
+    $stmt->bind_param("i", $subscription_id);
+
+    $stmt->execute();
+
+    $expired_purchases = $stmt->get_result();
+
+    while ($expired_purchase = $expired_purchases->fetch_assoc()) {
+        $purchase_id = (int) $expired_purchase["purchase_id"];
+
+        $sql = "UPDATE purchases
+                SET status = 'expired'
+                WHERE purchase_id = ?
+                AND status = 'active'";
+
+        $stmt = $conn->prepare($sql);
+
+        $stmt->bind_param("i", $purchase_id);
+
+        $stmt->execute();
+
+        if ($stmt->affected_rows === 1) {
+            $sql = "UPDATE subscriptions
+                    SET available_slots = LEAST(
+                        total_slots,
+                        available_slots + 1
+                    )
+                    WHERE subscription_id = ?";
+
+            $stmt = $conn->prepare($sql);
+
+            $stmt->bind_param("i", $subscription_id);
+
+            $stmt->execute();
+        }
+    }
+
+    $sql = "SELECT available_slots
+            FROM subscriptions
+            WHERE subscription_id = ?";
+
+    $stmt = $conn->prepare($sql);
+
+    $stmt->bind_param("i", $subscription_id);
+
+    $stmt->execute();
+
+    $subscription["available_slots"] = $stmt->get_result()->fetch_assoc()[
+        "available_slots"
+    ];
 
     /*
     |--------------------------------------------------------------------------

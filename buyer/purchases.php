@@ -16,18 +16,57 @@ $buyer_id = $_SESSION["user_id"];
 | Update expired purchases
 |--------------------------------------------------------------------------
 | Any active purchase whose expiry date has passed
-| will be marked as expired.
+| will be marked as expired and return one slot.
 */
 
-$sql = "UPDATE purchases
-        SET status = 'expired'
-        WHERE buyer_id = ?
-        AND expiry_date < CURDATE()
-        AND status = 'active'";
+$conn->begin_transaction();
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $buyer_id);
-$stmt->execute();
+try {
+    $sql = "SELECT purchase_id, subscription_id
+            FROM purchases
+            WHERE buyer_id = ?
+            AND expiry_date < CURDATE()
+            AND status = 'active'
+            FOR UPDATE";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $buyer_id);
+    $stmt->execute();
+
+    $expired_purchases = $stmt->get_result();
+
+    while ($expired_purchase = $expired_purchases->fetch_assoc()) {
+        $purchase_id = (int) $expired_purchase["purchase_id"];
+        $subscription_id = (int) $expired_purchase["subscription_id"];
+
+        $sql = "UPDATE purchases
+                SET status = 'expired'
+                WHERE purchase_id = ?
+                AND status = 'active'";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $purchase_id);
+        $stmt->execute();
+
+        if ($stmt->affected_rows === 1) {
+            $sql = "UPDATE subscriptions
+                    SET available_slots = LEAST(
+                        total_slots,
+                        available_slots + 1
+                    )
+                    WHERE subscription_id = ?";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $subscription_id);
+            $stmt->execute();
+        }
+    }
+
+    $conn->commit();
+} catch (Exception $e) {
+    $conn->rollback();
+    die("Unable to update expired purchases.");
+}
 
 /*
 |--------------------------------------------------------------------------

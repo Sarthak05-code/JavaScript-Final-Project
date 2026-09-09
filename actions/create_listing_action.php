@@ -10,6 +10,11 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit();
 }
 
+if (!csrf_is_valid($_POST["csrf_token"] ?? null)) {
+    header("Location: ../seller/create_listing.php?error=csrf");
+    exit();
+}
+
 $service_name = trim($_POST["service_name"] ?? "");
 $plan_name = trim($_POST["plan_name"] ?? "");
 $price = trim($_POST["price"] ?? "");

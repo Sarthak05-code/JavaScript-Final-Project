@@ -165,6 +165,8 @@ $result = $stmt->get_result();
                             onsubmit="return confirm('Are you sure you want to delete this listing?');"
                         >
 
+                            <?= csrf_field() ?>
+
                             <input
                                 type="hidden"
                                 name="subscription_id"

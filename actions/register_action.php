@@ -1,10 +1,15 @@
 <?php
 
+require_once "../includes/auth.php";
 require_once "../includes/db.php";
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: ../register.php");
     exit();
+}
+
+if (!csrf_is_valid($_POST["csrf_token"] ?? null)) {
+    die("Invalid request.");
 }
 
 $name = trim($_POST["name"] ?? "");

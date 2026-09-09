@@ -1,5 +1,7 @@
 <?php
 
+require_once "includes/auth.php";
+
 $page_title = "Register";
 
 require_once "includes/header.php";
@@ -18,6 +20,8 @@ require_once "includes/header.php";
         </p>
 
         <form action="actions/register_action.php" method="POST" class="mt-8">
+
+            <?= csrf_field() ?>
 
             <div class="mb-5">
 

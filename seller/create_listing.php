@@ -46,6 +46,8 @@ require_once "../includes/header.php";
         class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm"
     >
 
+        <?= csrf_field() ?>
+
         <!-- Service Name -->
         <div class="mb-5">
 

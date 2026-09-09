@@ -15,12 +15,49 @@ require_once "../includes/header.php";
 |--------------------------------------------------------------------------
 */
 
-$sql = "UPDATE purchases
-        SET status = 'expired'
-        WHERE expiry_date < CURDATE()
-        AND status = 'active'";
+$conn->begin_transaction();
 
-$conn->query($sql);
+try {
+    $sql = "SELECT purchase_id, subscription_id
+            FROM purchases
+            WHERE expiry_date < CURDATE()
+            AND status = 'active'
+            FOR UPDATE";
+
+    $result = $conn->query($sql);
+
+    while ($expired_purchase = $result->fetch_assoc()) {
+        $purchase_id = (int) $expired_purchase["purchase_id"];
+        $subscription_id = (int) $expired_purchase["subscription_id"];
+
+        $sql = "UPDATE purchases
+                SET status = 'expired'
+                WHERE purchase_id = ?
+                AND status = 'active'";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $purchase_id);
+        $stmt->execute();
+
+        if ($stmt->affected_rows === 1) {
+            $sql = "UPDATE subscriptions
+                    SET available_slots = LEAST(
+                        total_slots,
+                        available_slots + 1
+                    )
+                    WHERE subscription_id = ?";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $subscription_id);
+            $stmt->execute();
+        }
+    }
+
+    $conn->commit();
+} catch (Exception $e) {
+    $conn->rollback();
+    die("Unable to update expired purchases.");
+}
 
 /*
 |--------------------------------------------------------------------------

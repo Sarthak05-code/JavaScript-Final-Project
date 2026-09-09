@@ -10,6 +10,11 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit();
 }
 
+if (!csrf_is_valid($_POST["csrf_token"] ?? null)) {
+    header("Location: ../seller/my_listings.php");
+    exit();
+}
+
 $subscription_id = (int) ($_POST["subscription_id"] ?? 0);
 
 $service_name = trim($_POST["service_name"] ?? "");

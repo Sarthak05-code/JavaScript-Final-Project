@@ -11,6 +11,11 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit();
 }
 
+if (!csrf_is_valid($_POST["csrf_token"] ?? null)) {
+    header("Location: ../seller/my_listings.php");
+    exit();
+}
+
 $seller_id = $_SESSION["user_id"];
 
 $subscription_id = $_POST["subscription_id"] ?? 0;
